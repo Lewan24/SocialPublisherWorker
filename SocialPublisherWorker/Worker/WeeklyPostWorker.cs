@@ -1,6 +1,6 @@
-namespace SocialPublisherWorker;
+namespace SocialPublisherWorker.Worker;
 
-public class Worker(ILogger<Worker> logger) : BackgroundService
+public class WeeklyPostWorker(ILogger<WeeklyPostWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
