@@ -1,6 +1,6 @@
 namespace SocialPublisherWorker.Domain.Enums;
 
-internal enum SocialPlatform
+public enum SocialPlatform
 {
-    Facebook
+    Facebook = 1
 }

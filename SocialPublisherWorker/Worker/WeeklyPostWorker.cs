@@ -1,17 +1,27 @@
+using SocialPublisherWorker.Application.Interfaces;
+
 namespace SocialPublisherWorker.Worker;
 
-public class WeeklyPostWorker(ILogger<WeeklyPostWorker> logger) : BackgroundService
+public class WeeklyPostWorker(
+    ILogger<WeeklyPostWorker> logger,
+    IPublicationService publicationService,
+    IPostScheduler scheduler) : BackgroundService
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (!ct.IsCancellationRequested)
         {
-            if (logger.IsEnabled(LogLevel.Information))
+            try
             {
-                logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                if (scheduler.ShouldPublishAsync(ct))
+                    await publicationService.PublishWeeklyPostAsync(ct);
             }
-
-            await Task.Delay(1000, stoppingToken);
+            catch (Exception e)
+            {
+                logger.LogError(e, "Worker execution failed: {msg}", e.Message);
+            }
+            
+            await Task.Delay(TimeSpan.FromMinutes(1), ct);
         }
     }
 }
