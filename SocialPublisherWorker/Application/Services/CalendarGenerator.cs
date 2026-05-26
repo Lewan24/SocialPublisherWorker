@@ -8,6 +8,12 @@ public sealed class CalendarGenerator
 {
     public CalendarPost GenerateNextWeek()
     {
-        throw new NotImplementedException();
+        // TODO: Implement proper post generation
+        return new CalendarPost
+        {
+            Content = "Test Content",
+            Title = "Test Title",
+            WeekStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(4))
+        };
     }
 }

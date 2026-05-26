@@ -7,6 +7,7 @@ public class PostScheduler(IClock clock, SchedulerOptions options) : IPostSchedu
 {
     public Task<bool> ShouldPublishAsync(CancellationToken ct)
     {
-        throw new NotImplementedException();
+        //TODO: Implement logic with database
+        return Task.FromResult(true);
     }
 }

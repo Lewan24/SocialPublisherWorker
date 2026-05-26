@@ -3,7 +3,7 @@ using SocialPublisherWorker.Domain.Enums;
 
 namespace SocialPublisherWorker.Application.Interfaces;
 
-internal interface ISocialPublisher
+public interface ISocialPublisher
 {
     SocialPlatform Platform { get; }
     

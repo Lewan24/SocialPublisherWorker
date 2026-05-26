@@ -13,7 +13,7 @@ public class WeeklyPostWorker(
         {
             try
             {
-                if (scheduler.ShouldPublishAsync(ct))
+                if (await scheduler.ShouldPublishAsync(ct))
                     await publicationService.PublishWeeklyPostAsync(ct);
             }
             catch (Exception e)
@@ -21,7 +21,7 @@ public class WeeklyPostWorker(
                 logger.LogError(e, "Worker execution failed: {msg}", e.Message);
             }
             
-            await Task.Delay(TimeSpan.FromMinutes(1), ct);
+            await Task.Delay(TimeSpan.FromSeconds(5), ct);
         }
     }
 }
