@@ -7,31 +7,29 @@ namespace SocialPublisherWorker.Infrastructure.Social.Facebook;
 
 public sealed class FacebookClient
 {
-    //TODO: Implement facebook client
     public async Task<string> PublishPostAsync(
         HttpClient httpClient,
         FacebookOptions options,
         CalendarPost post,
         CancellationToken ct)
     {
-        var facebookAuthApi = new Uri($"https://graph.facebook.com/oauth/access_token");
         var facebookGraphApi = new Uri("https://graph.facebook.com/v25.0");
 
-        //var authGetAccessTokenUri = new Uri($"{facebookAuthApi}?client_id={options.AppId}&client_secret={options.AppSecret}&grant_type=client_credentials");
-        //var authResponse = await httpClient.GetStringAsync(authGetAccessTokenUri, ct);
-        
-        //var authResult = JsonSerializer.Deserialize<FacebookAuthApiResponse>(authResponse);
-        
-        //var getPageDetailsResult = await httpClient.GetStringAsync($"{facebookGraphApi}/{options.PageId}?access_token={authResult?.access_token}", ct);
-        
-        //return getPageDetailsResult;
-        
-        var httpContent = new StringContent(JsonSerializer.Serialize(new FacebookCreatePostRequest("Hello world", options.AccessToken)));
-        var result = await httpClient.PostAsync($"{facebookGraphApi}/{options.PageId}/feed", httpContent, ct);
+        try
+        {
+            var requestValues = new Dictionary<string, string>
+            {
+                ["caption"] = post.Caption,
+                ["url"] = "https://scontent.fgdn1-1.fna.fbcdn.net/v/t39.30808-6/705729373_3276352705906687_343019618255444986_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=J9KWpHmnt1AQ7kNvwEy7Jz8&_nc_oc=AdoST4P802deyZ-hTlzR_iFbXOEJJ-oEDFnRq8gL3PNRU5u6AbcaG-Lf9W4Mgz0UjHo&_nc_zt=23&_nc_ht=scontent.fgdn1-1.fna&_nc_gid=g89Zz_NmVDam4tUqvil8rQ&_nc_ss=7b2a8&oh=00_Af5Gcv9qbhCFZyXxA6e5S3XFJfpSYlJ8m1d1ErjKpJTMXQ&oe=6A1CECC7"
+            };
+            var httpContent = new FormUrlEncodedContent(requestValues);
+            var result = await httpClient.PostAsync($"{facebookGraphApi}/{options.PageId}/photos?access_token={options.AccessToken}", httpContent, ct);
 
-        return await result.Content.ReadAsStringAsync(ct);
+            return await result.Content.ReadAsStringAsync(ct);
+        }
+        catch (Exception e)
+        {
+            return e.Message;
+        }
     }
 }
-
-public record FacebookAuthApiResponse(string access_token, string token_type); 
-public record FacebookCreatePostRequest(string message, string access_token);

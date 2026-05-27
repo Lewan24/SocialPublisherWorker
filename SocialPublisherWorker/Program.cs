@@ -23,7 +23,14 @@ builder.Services.AddTransient<IClock, SystemClock>();
 builder.Services.AddScoped<IPostScheduler, PostScheduler>();
 builder.Services.AddScoped<IPublicationService, PublicationService>();
 builder.Services.AddScoped<ICalendarGenerator, CalendarGenerator>();
+
 builder.Services.AddScoped<FacebookPublisher>();
+builder.Configuration.AddEnvironmentVariables();
+builder.Services
+    .AddOptions<FacebookOptions>()
+    .BindConfiguration("Facebook")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 builder.Services.AddHostedService<WeeklyPostWorker>();
 

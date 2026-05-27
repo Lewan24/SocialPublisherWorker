@@ -11,8 +11,7 @@ public sealed class CalendarGenerator
         // TODO: Implement proper post generation
         return new CalendarPost
         {
-            Content = "Test Content",
-            Title = "Test Title",
+            Caption = "Schedule for xx.xx - xx.xx",
             WeekStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(4))
         };
     }

@@ -4,10 +4,12 @@ public sealed class FacebookOptions
 {
     public const string SectionName = "Facebook";
 
-    public required string PageId { get; init; }
-    
-    // TODO: Move below to env
-    public required string AppId { get; init; }
-    public required string AppSecret { get; init; }
-    public required string AccessToken { get; init; }
+    /// <summary>
+    /// ENV Facebook__PageId
+    /// </summary>
+    public string PageId { get; init; } = string.Empty;
+    /// <summary>
+    /// ENV Facebook__AccessToken
+    /// </summary>
+    public string AccessToken { get; init; }  = string.Empty;
 }
