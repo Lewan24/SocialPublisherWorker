@@ -2,7 +2,9 @@ using SocialPublisherWorker.Worker;
 using Serilog;
 using SocialPublisherWorker.Application.Interfaces;
 using SocialPublisherWorker.Application.Services;
+using SocialPublisherWorker.Domain.Entities;
 using SocialPublisherWorker.Infrastructure.Social.Facebook;
+using SocialPublisherWorker.Infrastructure.Time;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -12,6 +14,11 @@ var logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Logging.AddSerilog(logger, dispose: true);
+builder.Services.AddHttpClient();
+
+builder.Services.AddSingleton<SchedulerOptions>();
+
+builder.Services.AddTransient<IClock, SystemClock>();
 
 builder.Services.AddScoped<IPostScheduler, PostScheduler>();
 builder.Services.AddScoped<IPublicationService, PublicationService>();
