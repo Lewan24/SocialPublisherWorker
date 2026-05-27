@@ -10,6 +10,7 @@ public class WeeklyPostWorker(
     IServiceScopeFactory scopeFactory)
     : BackgroundService
 {
+    //TODO: Implement proper publishing only in sunday if the post was not published already
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)
@@ -29,7 +30,7 @@ public class WeeklyPostWorker(
                 logger.LogError(e, "Worker execution failed: {msg}", e.Message);
             }
             
-            await Task.Delay(TimeSpan.FromSeconds(30), ct);
+            await Task.Delay(TimeSpan.FromMinutes(30), ct);
         }
     }
 }

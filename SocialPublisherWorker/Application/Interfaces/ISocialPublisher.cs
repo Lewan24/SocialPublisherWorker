@@ -13,5 +13,5 @@ public interface ISocialPublisher
     /// <param name="post"><see cref="CalendarPost"/></param>
     /// <param name="cancellationToken"></param>
     /// <returns>Created post ID from social</returns>
-    Task<string> PublishAsync(CalendarPost post, CancellationToken cancellationToken);
+    Task PublishAsync(CalendarPost post, CancellationToken cancellationToken);
 }

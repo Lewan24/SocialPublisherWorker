@@ -10,10 +10,10 @@ public class PublicationService(
 {
     public async Task PublishWeeklyPostAsync(CancellationToken ct)
     {
-        logger.LogInformation("Preparing new next week post");
+        logger.LogInformation("Preparing new next week post...");
         var newPost = postGenerator.GenerateNextWeek();
         
-        logger.LogInformation("Publishing new post to facebook");
+        logger.LogInformation("Publishing new post to facebook...");
         await facebookPublisher.PublishAsync(newPost, ct);
     }
 }
