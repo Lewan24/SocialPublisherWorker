@@ -1,19 +1,39 @@
+using Microsoft.Extensions.Options;
+using SocialPublisherWorker.Application.Interfaces;
 using SocialPublisherWorker.Domain.Entities;
 
 namespace SocialPublisherWorker.Infrastructure.Social.Facebook;
 
-public sealed class FacebookClient
+public sealed class FacebookClient(
+    IDefaultHttpClient httpClient,
+    IOptions<FacebookOptions> options,
+    ILogger<FacebookClient> logger)
 {
     private readonly Uri _facebookGraphApi = new("https://graph.facebook.com/v25.0");
-   
-    //TODO: Change primitive returns to custom object with status, message etc.
+    private readonly FacebookOptions _options = options.Value;
+    
+    public async Task<string> TestTokenAndConnection(CancellationToken ct)
+    {
+        try
+        {
+            var pageUri = new Uri($"{_facebookGraphApi}/{_options.PageId}");
+            logger.LogInformation("Requesting: {PageUri}", pageUri);
+            
+            var result = await httpClient.FetchAsync<string>(
+                $"{pageUri}?access_token={_options.AccessToken}", ct);
+
+            return result;
+        }
+        catch (Exception e)
+        {
+            return e.Message;
+        }
+    }
+    
     public async Task<string> PublishPostAsync(
-        HttpClient httpClient,
-        FacebookOptions options,
         CalendarPost post,
         CancellationToken ct)
     {
-        // TODO: Implement retrying
         try
         {
             var requestValues = new Dictionary<string, string>
@@ -21,14 +41,12 @@ public sealed class FacebookClient
                 ["caption"] = post.Caption,
                 ["url"] = post.PhotoUrl
             };
+
+            var url =
+                $"{_facebookGraphApi}/{_options.PageId}/photos?access_token={_options.AccessToken}";
+            logger.LogInformation("Requesting: {PageUri}", url);
             
-            using var httpContent = new FormUrlEncodedContent(requestValues);
-            var result = await httpClient.PostAsync(
-                requestUri: $"{_facebookGraphApi}/{options.PageId}/photos?access_token={options.AccessToken}", 
-                content: httpContent,
-                cancellationToken: ct);
-            
-            return await result.Content.ReadAsStringAsync(ct);
+            return await httpClient.PostFormAsync(url, requestValues, ct);
         }
         catch (Exception e)
         {
@@ -37,8 +55,6 @@ public sealed class FacebookClient
     }
     
     public async Task<bool> PublishCommentsAsync(
-        HttpClient httpClient,
-        FacebookOptions options,
         string postId,
         CancellationToken ct)
     {
@@ -59,8 +75,6 @@ public sealed class FacebookClient
             {
                 Console.WriteLine($"Processing ('{comment}')...");
                 await PublishCommentAsync(
-                    httpClient,
-                    options,
                     postId,
                     comment,
                     ct);
@@ -76,24 +90,22 @@ public sealed class FacebookClient
     }
 
     private async Task PublishCommentAsync(
-        HttpClient httpClient,
-        FacebookOptions options,
         string postId,
         string comment,
         CancellationToken ct)
     {
-        //TODO: implement retrying
         var requestValues = new Dictionary<string, string>
         {
             ["message"] = comment
         };
         
         using var httpContent = new FormUrlEncodedContent(requestValues);
-        var response = await httpClient.PostAsync(
-            requestUri: $"{_facebookGraphApi}/{postId}/comments?access_token={options.AccessToken}", 
-            content: httpContent,
-            cancellationToken: ct);
         
-        response.EnsureSuccessStatusCode();
+        var url = $"{_facebookGraphApi}/{postId}/comments";
+        logger.LogInformation("Requesting: {PageUri}", url);
+        
+        await httpClient.PostFormAsync(
+            $"{url}?access_token={_options.AccessToken}", 
+            requestValues, ct);
     }
 }

@@ -1,15 +1,14 @@
 using System.Text.Json;
-using Microsoft.Extensions.Options;
 using SocialPublisherWorker.Application.Interfaces;
 using SocialPublisherWorker.Domain.Entities;
 using SocialPublisherWorker.Domain.Enums;
 
 namespace SocialPublisherWorker.Infrastructure.Social.Facebook;
 
-public class FacebookPublisher(ILogger<FacebookPublisher> logger, HttpClient http, IOptions<FacebookOptions> fbOptions) : ISocialPublisher
+public class FacebookPublisher(
+    ILogger<FacebookPublisher> logger,
+    FacebookClient facebookClient) : ISocialPublisher
 {
-    private readonly FacebookClient _facebookClient = new();
-    
     public SocialPlatform Platform => SocialPlatform.Facebook;
 
     /// <summary>
@@ -20,15 +19,20 @@ public class FacebookPublisher(ILogger<FacebookPublisher> logger, HttpClient htt
     /// <returns>Created post ID</returns>
     public async Task PublishAsync(CalendarPost post, CancellationToken cancellationToken)
     {
+        // Test if env works for simple request
+        // var result = await facebookClient.TestTokenAndConnection(cancellationToken);
+        // logger.LogInformation(result);
+        // return;
+        
         logger.LogInformation("Publishing post {@postTitle} to facebook page...", post.Caption);
-        var createPostResult = await _facebookClient.PublishPostAsync(http, fbOptions.Value, post, cancellationToken);
+        var createPostResult = await facebookClient.PublishPostAsync(post, cancellationToken);
         logger.LogInformation("Post published");
         logger.LogInformation("Created post Id: {@Post}", createPostResult);
 
         var createdPost = JsonSerializer.Deserialize<FacebookCreatedPostResponse>(createPostResult);
         
         logger.LogInformation("Attempting to create comments to created post...");
-        var postCommentsResult = await _facebookClient.PublishCommentsAsync(http, fbOptions.Value, createdPost?.post_id!, cancellationToken);
+        var postCommentsResult = await facebookClient.PublishCommentsAsync(createdPost?.post_id!, cancellationToken);
         logger.LogInformation("Comments publishing status: {@Status}", postCommentsResult ?  "Success" : "Failure");
     }
     
