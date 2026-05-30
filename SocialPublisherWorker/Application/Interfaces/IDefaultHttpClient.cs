@@ -5,6 +5,10 @@ public interface IDefaultHttpClient
     Task<TResponse> FetchAsync<TResponse>(
         string url,
         CancellationToken ct = default);
+    
+    Task<string> FetchStringAsync(
+        string url,
+        CancellationToken ct = default);
 
     Task<TResponse> PostAsync<TRequest, TResponse>(
         string url,

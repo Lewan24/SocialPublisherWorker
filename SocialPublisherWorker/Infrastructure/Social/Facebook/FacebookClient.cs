@@ -19,7 +19,7 @@ public sealed class FacebookClient(
             var pageUri = new Uri($"{_facebookGraphApi}/{_options.PageId}");
             logger.LogInformation("Requesting: {PageUri}", pageUri);
             
-            var result = await httpClient.FetchAsync<string>(
+            var result = await httpClient.FetchStringAsync(
                 $"{pageUri}?access_token={_options.AccessToken}", ct);
 
             return result;
@@ -50,7 +50,8 @@ public sealed class FacebookClient(
         }
         catch (Exception e)
         {
-            return e.Message;
+            logger.LogError("Error while publishing post to Facebook: {Error}", e.Message);
+            throw;
         }
     }
     
@@ -84,7 +85,7 @@ public sealed class FacebookClient(
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError("Error while publishing one of comments to Facebook: {Error}", e.Message);
             return false;
         }
     }

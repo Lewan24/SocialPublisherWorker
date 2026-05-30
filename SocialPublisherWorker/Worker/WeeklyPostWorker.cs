@@ -1,36 +1,36 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using SocialPublisherWorker.Application.Interfaces;
-using SocialPublisherWorker.Infrastructure.Social.Facebook;
 
 namespace SocialPublisherWorker.Worker;
 
 public class WeeklyPostWorker(
     ILogger<WeeklyPostWorker> logger,
-    IServiceScopeFactory scopeFactory)
+    IServiceScopeFactory scopeFactory,
+    IClock clock)
     : BackgroundService
 {
-    //TODO: Implement proper publishing only in sunday if the post was not published already
+    private readonly TimeSpan _interval = TimeSpan.FromMinutes(30);
+    
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)
         {
             try
             {
+                logger.LogInformation("Worker running at: {time} UTC", clock.UtcNow);
+                
                 using var scope = scopeFactory.CreateScope();
-                
-                var scheduler = scope.ServiceProvider.GetRequiredService<IPostScheduler>();   
+                  
                 var publicationService = scope.ServiceProvider.GetRequiredService<IPublicationService>();
+                await publicationService.PublishWeeklyPostAsync(ct);
                 
-                if (await scheduler.ShouldPublishAsync(ct))
-                    await publicationService.PublishWeeklyPostAsync(ct);
+                logger.LogInformation("Worker finished. Next run in {@Interval}", _interval);
             }
             catch (Exception e)
             {
                 logger.LogError(e, "Worker execution failed: {msg}", e.Message);
             }
             
-            await Task.Delay(TimeSpan.FromMinutes(30), ct);
+            await Task.Delay(_interval, ct);
         }
     }
 }

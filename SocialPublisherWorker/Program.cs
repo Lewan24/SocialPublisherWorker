@@ -1,20 +1,21 @@
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 using Polly;
 using Polly.Extensions.Http;
 using SocialPublisherWorker.Worker;
 using Serilog;
 using SocialPublisherWorker.Application.Interfaces;
 using SocialPublisherWorker.Application.Services;
-using SocialPublisherWorker.Domain.Entities;
+using SocialPublisherWorker.Infrastructure.Persistence;
+using SocialPublisherWorker.Infrastructure.Persistence.Repositories;
 using SocialPublisherWorker.Infrastructure.Social.Facebook;
 using SocialPublisherWorker.Infrastructure.Time;
-using ILogger = Serilog.ILogger;
 
 var builder = Host.CreateApplicationBuilder(args);
 
 var logger = new LoggerConfiguration()
     .WriteTo.Console()
-    .MinimumLevel.Debug()
+    .MinimumLevel.Information()
     .CreateLogger();
 
 builder.Logging.AddSerilog(logger, dispose: true);
@@ -65,8 +66,6 @@ builder.Services
     })
     .AddPolicyHandler(GetTimeoutPolicy());
 
-builder.Services.AddSingleton<SchedulerOptions>();
-
 builder.Services.AddTransient<IClock, SystemClock>();
 
 builder.Services.AddScoped<IPostScheduler, PostScheduler>();
@@ -84,5 +83,16 @@ builder.Services
 
 builder.Services.AddHostedService<WeeklyPostWorker>();
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseSqlite("Data Source=SocialPublisher.db");
+});
+builder.Services.AddScoped<IPublicationRepository, PublicationRepository>();
+
 var host = builder.Build();
+
+using var scope = host.Services.CreateScope();
+var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+appDbContext.Database.Migrate();
+
 await host.RunAsync();

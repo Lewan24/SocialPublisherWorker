@@ -7,7 +7,8 @@ namespace SocialPublisherWorker.Infrastructure.Social.Facebook;
 
 public class FacebookPublisher(
     ILogger<FacebookPublisher> logger,
-    FacebookClient facebookClient) : ISocialPublisher
+    FacebookClient facebookClient,
+    IPublicationRepository publicationRepository) : ISocialPublisher
 {
     public SocialPlatform Platform => SocialPlatform.Facebook;
 
@@ -22,18 +23,19 @@ public class FacebookPublisher(
         // Test if env works for simple request
         // var result = await facebookClient.TestTokenAndConnection(cancellationToken);
         // logger.LogInformation(result);
-        // return;
         
         logger.LogInformation("Publishing post {@postTitle} to facebook page...", post.Caption);
         var createPostResult = await facebookClient.PublishPostAsync(post, cancellationToken);
         logger.LogInformation("Post published");
         logger.LogInformation("Created post Id: {@Post}", createPostResult);
-
+        
         var createdPost = JsonSerializer.Deserialize<FacebookCreatedPostResponse>(createPostResult);
         
         logger.LogInformation("Attempting to create comments to created post...");
         var postCommentsResult = await facebookClient.PublishCommentsAsync(createdPost?.post_id!, cancellationToken);
         logger.LogInformation("Comments publishing status: {@Status}", postCommentsResult ?  "Success" : "Failure");
+        
+        await publicationRepository.AddPostPublicationAsync(SocialPlatform.Facebook, createdPost?.post_id!);
     }
     
     /// <summary>

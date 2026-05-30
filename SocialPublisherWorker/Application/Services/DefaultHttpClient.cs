@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Text.Json;
 using SocialPublisherWorker.Application.Interfaces;
 
@@ -24,6 +25,18 @@ public sealed class DefaultHttpClient(
         return await HandleResponse<TResponse>(
             response,
             ct);
+    }
+    
+    public async Task<string> FetchStringAsync(
+        string url,
+        CancellationToken ct = default)
+    {
+        using var response = await httpClient.GetAsync(
+            url,
+            HttpCompletionOption.ResponseHeadersRead,
+            ct);
+
+        return await response.Content.ReadAsStringAsync(ct);
     }
 
     public async Task<TResponse> PostAsync<TRequest, TResponse>(
@@ -61,22 +74,21 @@ public sealed class DefaultHttpClient(
         HttpResponseMessage response,
         CancellationToken ct)
     {
+        var content = await response.Content
+            .ReadAsStreamAsync(ct);
+        
         if (!response.IsSuccessStatusCode)
         {
-            var content = await response.Content
-                .ReadAsStringAsync(ct);
-
             logger.LogError(
                 "HTTP request failed. StatusCode: {StatusCode}, Content: {Content}",
                 response.StatusCode,
-                content);
+                content.ToString());
 
             throw new HttpRequestException(
                 $"Request failed with status code {(int)response.StatusCode}");
         }
 
-        var result = await response.Content
-                .ReadFromJsonAsync<T>(JsonOptions, ct);
+        var result = JsonSerializer.Deserialize<T>(content, JsonOptions);
 
         if (result is null)
         {
